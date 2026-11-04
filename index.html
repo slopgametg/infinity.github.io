@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0b0812">
+<title>Infinity</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0b0812; --bg2:#140e20; --panel:#1a1229; --panel2:#231936; --line:#3a2b55;
+  --gold:#e0bd6e; --gold2:#a8863f; --violet:#9b6bff; --violet2:#5b3aa8;
+  --red:#ef4f63; --green:#5fd39a; --blue:#6aa8ff; --text:#efe8fa; --muted:#a397bb;
+  --c:#b9b0c9; --u:#6aa8ff; --r:#e0bd6e;
+  --serif:'Cormorant Garamond',Georgia,'Times New Roman',serif;
+  --sans:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--sans);overflow:hidden;
+  user-select:none;-webkit-user-select:none;touch-action:manipulation}
+button{font:inherit;color:inherit;cursor:pointer;border:none;background:none;touch-action:manipulation}
+#app{position:fixed;inset:0;display:flex;flex-direction:column;
+  background:radial-gradient(120% 80% at 50% 0%,#24173c 0%,var(--bg) 60%)}
+.screen{position:absolute;inset:0;display:none;flex-direction:column;
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+.screen.on{display:flex}
+
+/* ---------- buttons ---------- */
+.btn{padding:14px 26px;border-radius:12px;font-weight:600;font-size:16px;letter-spacing:.02em;
+  background:linear-gradient(180deg,#3b2766,#261843);border:1px solid #5d44a0;color:var(--text);
+  box-shadow:0 6px 20px #0008, inset 0 1px 0 #ffffff1a;transition:transform .12s, filter .12s}
+.btn:hover{filter:brightness(1.15)}
+.btn:active{transform:scale(.96)}
+.btn.gold{background:linear-gradient(180deg,#e9c97f,#b48b3c);color:#1c1206;border-color:#f4dc9c}
+.btn.ghost{background:transparent;border-color:var(--line);box-shadow:none}
+.btn.small{padding:9px 14px;font-size:14px;border-radius:10px}
+.btn:disabled{opacity:.4;pointer-events:none}
+
+/* ---------- menu ---------- */
+#menu{align-items:center;justify-content:center;text-align:center;gap:10px;overflow:hidden}
+#menu .stars{position:absolute;inset:0;pointer-events:none}
+.logo{font-family:var(--serif);font-weight:700;font-size:clamp(64px,16vw,128px);line-height:.9;letter-spacing:.04em;
+  background:linear-gradient(180deg,#fff5d8,#e0bd6e 55%,#8a6a2a);-webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 0 30px #e0bd6e44);position:relative}
+.inf-ring{width:min(220px,48vw);height:auto;margin-bottom:-8px;position:relative}
+.inf-ring path{stroke-dasharray:14 10;animation:dash 6s linear infinite}
+@keyframes dash{to{stroke-dashoffset:-240}}
+.tag{font-family:var(--serif);font-size:clamp(18px,4.5vw,24px);color:var(--muted);font-style:italic;max-width:520px;padding:0 20px;position:relative}
+.menu-btns{display:flex;flex-direction:column;gap:12px;margin-top:22px;width:min(280px,80vw);position:relative}
+.credits{margin-top:26px;font-size:13px;color:var(--muted);line-height:1.8;position:relative}
+.credits b{color:var(--gold);font-weight:600;letter-spacing:.06em}
+.best{font-size:13px;color:var(--muted);margin-top:6px;position:relative}
+
+/* ---------- rules ---------- */
+#rules{align-items:center;overflow:auto;padding:24px 18px}
+.rules-box{max-width:620px;width:100%;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:22px 22px 26px;margin:auto}
+.rules-box h2{font-family:var(--serif);font-size:34px;color:var(--gold);margin-bottom:10px}
+.rules-box h3{font-size:15px;margin:16px 0 6px;color:var(--violet)}
+.rules-box p,.rules-box li{font-size:14.5px;line-height:1.55;color:#d9d0ea}
+.rules-box ul{padding-left:18px}
+
+/* ---------- search ---------- */
+.hud{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;
+  background:linear-gradient(180deg,#0b0812ee,#0b081200);position:relative;z-index:3}
+.timer{font-family:var(--serif);font-weight:700;font-size:34px;min-width:84px;color:var(--gold);letter-spacing:.03em}
+.timer.warn{color:var(--red);animation:pulse .6s ease-in-out infinite alternate}
+@keyframes pulse{to{transform:scale(1.08)}}
+.pill{display:flex;align-items:center;gap:6px;padding:7px 12px;border-radius:999px;background:var(--panel);border:1px solid var(--line);font-weight:600;font-size:14px}
+.pill svg{width:16px;height:16px}
+.room-wrap{flex:1;position:relative;min-height:0}
+#room{width:100%;height:100%;display:block}
+.obj{cursor:pointer;transition:filter .2s}
+.obj:hover{filter:brightness(1.35) drop-shadow(0 0 6px #e0bd6e88)}
+.obj.done{cursor:default;filter:brightness(.55) saturate(.6)}
+.obj.done:hover{filter:brightness(.55) saturate(.6)}
+.obj.note-obj.done{filter:none}
+.loose{cursor:pointer;animation:glow 1.4s ease-in-out infinite alternate}
+@keyframes glow{from{filter:drop-shadow(0 0 2px #e0bd6e)}to{filter:drop-shadow(0 0 10px #ffe9a8)}}
+.hint-line{position:absolute;left:0;right:0;bottom:10px;text-align:center;font-size:13px;color:var(--muted);pointer-events:none;padding:0 12px}
+
+/* ---------- toasts ---------- */
+#toasts{position:fixed;left:50%;top:70px;transform:translateX(-50%);z-index:60;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none;width:min(92vw,420px)}
+.toast{background:#1d1430f2;border:1px solid var(--line);padding:10px 16px;border-radius:12px;font-size:14px;
+  box-shadow:0 8px 30px #000a;animation:tin .25s ease-out;text-align:center;line-height:1.4}
+.toast.c{border-color:var(--c)} .toast.u{border-color:var(--u)} .toast.r{border-color:var(--r);box-shadow:0 0 24px #e0bd6e55}
+.toast b{color:var(--gold)}
+@keyframes tin{from{opacity:0;transform:translateY(-10px)}}
+
+/* ---------- modal ---------- */
+.modal{position:fixed;inset:0;z-index:50;background:#05030acc;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
+  display:none;align-items:center;justify-content:center;padding:16px}
+.modal.on{display:flex}
+.mbox{width:min(440px,100%);max-height:100%;overflow:auto;background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);
+  border-radius:20px;padding:20px 18px;box-shadow:0 20px 60px #000c;animation:pop .22s ease-out;text-align:center}
+@keyframes pop{from{transform:scale(.92);opacity:0}}
+.mhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:8px}
+.mhead h3{font-family:var(--serif);font-size:26px;color:var(--gold);text-align:left;line-height:1.1}
+.mtimer{font-family:var(--serif);font-weight:700;font-size:22px;color:var(--gold)}
+.mtext{font-size:14.5px;color:#d6cce8;line-height:1.5;margin-bottom:14px}
+.mfoot{display:flex;gap:10px;justify-content:center;margin-top:16px;flex-wrap:wrap}
+.shake{animation:shk .35s}
+@keyframes shk{20%,60%{transform:translateX(-7px)}40%,80%{transform:translateX(7px)}}
+
+/* safe */
+.dials{display:flex;gap:12px;justify-content:center}
+.dial{display:flex;flex-direction:column;align-items:center;gap:6px}
+.dial button{width:56px;height:40px;border-radius:10px;background:#2b1f45;border:1px solid var(--line);font-size:18px}
+.dial .dg{width:56px;height:66px;border-radius:12px;background:#0d0916;border:2px solid var(--gold2);display:flex;align-items:center;justify-content:center;
+  font-family:var(--serif);font-size:42px;font-weight:700;color:var(--gold)}
+/* lights */
+.lgrid{display:grid;grid-template-columns:repeat(3,72px);gap:10px;justify-content:center}
+.lcell{width:72px;height:72px;border-radius:14px;background:#1b1328;border:2px solid #3a2b55;transition:all .15s}
+.lcell.on{background:radial-gradient(circle,#ffe9a8,#c9963a);border-color:#ffe9a8;box-shadow:0 0 18px #e0bd6e99}
+/* simon */
+.sgrid{display:grid;grid-template-columns:repeat(2,96px);gap:12px;justify-content:center}
+.sg{width:96px;height:96px;border-radius:50%;opacity:.35;border:3px solid #fff2;transition:opacity .12s,transform .12s}
+.sg.lit{opacity:1;transform:scale(1.06);box-shadow:0 0 30px currentColor}
+.sg:nth-child(1){background:#ef4f63;color:#ef4f63}.sg:nth-child(2){background:#6aa8ff;color:#6aa8ff}
+.sg:nth-child(3){background:#5fd39a;color:#5fd39a}.sg:nth-child(4){background:#e0bd6e;color:#e0bd6e}
+.sstat{margin-top:12px;font-size:14px;color:var(--muted);min-height:20px}
+/* clock */
+.clockface{width:200px;height:200px;margin:0 auto}
+.cbtns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+/* books */
+.bgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;max-width:300px;margin:0 auto}
+.bk{aspect-ratio:1;border-radius:10px;background:#1b1328;border:1px solid var(--line);display:flex;align-items:center;justify-content:center}
+.bk svg{width:70%;height:70%}
+
+/* ---------- cards ---------- */
+.card{--rc:var(--c);position:relative;width:var(--cw,112px);height:calc(var(--cw,112px)*1.45);border-radius:12px;flex:none;
+  background:linear-gradient(170deg,#2d2047,#160f24 70%);border:2px solid var(--rc);
+  box-shadow:0 8px 20px #000a, inset 0 0 0 1px #ffffff10;display:flex;flex-direction:column;align-items:center;
+  padding:calc(var(--cw,112px)*.07);text-align:center;transition:transform .15s, filter .15s, opacity .2s;cursor:pointer}
+.card.u{--rc:var(--u)} .card.r{--rc:var(--r);box-shadow:0 8px 20px #000a,0 0 16px #e0bd6e44}
+.card .cost{position:absolute;top:-9px;left:-9px;width:calc(var(--cw,112px)*.27);height:calc(var(--cw,112px)*.27);border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,#c9a8ff,#6d3fd4);border:2px solid #e8dcff;display:flex;align-items:center;justify-content:center;
+  font-weight:700;font-size:calc(var(--cw,112px)*.15);color:#fff;box-shadow:0 2px 8px #000a}
+.card .cn{font-family:var(--serif);font-weight:700;font-size:calc(var(--cw,112px)*.15);line-height:1;margin-top:calc(var(--cw,112px)*.08);min-height:calc(var(--cw,112px)*.3);display:flex;align-items:center}
+.card .ci{width:62%;aspect-ratio:1;color:var(--rc);margin:2px 0}
+.card .ct{font-size:calc(var(--cw,112px)*.095);line-height:1.25;color:#d9d0ea}
+.card.dim{filter:grayscale(.7) brightness(.6)}
+.hand .card:hover{transform:translateY(-10px)}
+.card.flyout{opacity:0;transform:translateY(-120px) scale(.7)}
+
+/* ---------- prep ---------- */
+#prep{align-items:center;overflow:auto;padding:20px 14px}
+#prep h2{font-family:var(--serif);font-size:34px;color:var(--gold);text-align:center;margin-top:auto}
+#prep .sub{color:var(--muted);text-align:center;margin:6px 0 16px;font-size:14px;max-width:460px}
+.deckgrid{display:flex;flex-wrap:wrap;gap:14px 12px;justify-content:center;max-width:720px;--cw:92px;padding:10px 0}
+#prep .btn{margin:18px 0 auto}
+
+/* ---------- duel ---------- */
+#duel{overflow:hidden}
+.dtop{flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;padding-top:6px}
+.dloop{position:absolute;top:10px;left:12px;font-size:12px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
+.dturn{position:absolute;top:8px;right:12px;display:flex;align-items:center;gap:6px}
+.intent{display:flex;align-items:center;gap:8px;background:#1d1430;border:1px solid var(--line);padding:7px 12px;border-radius:12px;
+  font-size:13.5px;max-width:92%;margin-bottom:4px;box-shadow:0 6px 18px #0008}
+.intent.time{border-color:var(--violet);box-shadow:0 0 18px #9b6bff55}
+.intent svg{width:22px;height:22px;flex:none}
+.intent b{font-weight:700}
+.demon{height:min(34vh,300px);width:auto;animation:float 3.2s ease-in-out infinite;filter:drop-shadow(0 0 24px #9b6bff55)}
+@keyframes float{50%{transform:translateY(-8px)}}
+.demon.hit{animation:hit .35s}
+@keyframes hit{0%,100%{transform:translateX(0)}25%{transform:translateX(-10px);filter:brightness(2) drop-shadow(0 0 10px #f00)}75%{transform:translateX(8px)}}
+.bars{width:min(360px,86vw);display:flex;align-items:center;gap:8px;margin-top:4px}
+.bar{flex:1;height:16px;border-radius:999px;background:#0d0916;border:1px solid var(--line);overflow:hidden;position:relative}
+.bar i{position:absolute;inset:0;right:auto;background:linear-gradient(90deg,#a2283a,#ef4f63);transition:width .35s}
+.bar.p i{background:linear-gradient(90deg,#2d9b69,#5fd39a)}
+.bar span{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;text-shadow:0 1px 2px #000}
+.chip{display:flex;align-items:center;gap:3px;font-size:13px;font-weight:700;min-width:38px}
+.chip svg{width:16px;height:16px}
+.chip.zero{opacity:.3}
+.status{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;min-height:22px;margin-top:4px}
+.st{font-size:11.5px;padding:3px 8px;border-radius:999px;background:#2a1d40;border:1px solid var(--line);color:#e3d8f7}
+.st.bad{border-color:var(--red);color:#ffc2cb}.st.good{border-color:var(--green);color:#c5f5dd}
+.log{text-align:center;font-size:13.5px;color:#d6cce8;min-height:36px;padding:4px 14px;line-height:1.35;font-style:italic;font-family:var(--serif);font-size:17px}
+.dbot{background:linear-gradient(180deg,#0b081200,#0b0812 30%);padding:4px 10px 12px;display:flex;flex-direction:column;gap:6px;align-items:center}
+.prow{display:flex;align-items:center;gap:10px;width:min(560px,100%);justify-content:space-between;flex-wrap:wrap}
+.energy{display:flex;gap:5px;align-items:center}
+.orb{width:20px;height:20px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#d9c4ff,#7a4ae0);border:1px solid #e8dcff;box-shadow:0 0 10px #9b6bff99}
+.orb.off{background:#1b1328;border-color:#3a2b55;box-shadow:none}
+.decks{font-size:12px;color:var(--muted);display:flex;gap:10px}
+.hand{display:flex;gap:8px;justify-content:center;align-items:flex-end;width:100%;padding-top:12px;min-height:calc(var(--cw)*1.45 + 14px);
+  --cw:min(124px,calc((100vw - 52px)/4))}
+.hand .empty{color:var(--muted);font-size:14px;align-self:center;font-style:italic}
+.hourglass{font-family:var(--serif);font-weight:700;font-size:20px;color:var(--gold);min-width:44px;text-align:right}
+.hourglass.warn{color:var(--red)}
+.float{position:fixed;z-index:70;font-weight:800;font-size:28px;pointer-events:none;text-shadow:0 2px 6px #000;animation:fl 1s ease-out forwards}
+@keyframes fl{to{transform:translateY(-60px);opacity:0}}
+.flash{position:fixed;inset:0;pointer-events:none;z-index:40;background:#ef4f6333;opacity:0}
+.flash.go{animation:fla .4s}
+@keyframes fla{30%{opacity:1}}
+.timeflash{position:fixed;inset:0;pointer-events:none;z-index:40;background:radial-gradient(circle,#9b6bff00 30%,#9b6bff55);opacity:0}
+.timeflash.go{animation:fla .8s}
+
+/* ---------- end ---------- */
+#over{align-items:center;justify-content:center;text-align:center;padding:24px;gap:10px}
+#over h2{font-family:var(--serif);font-size:52px;color:var(--red);line-height:1}
+#over p{color:#d6cce8;max-width:420px;line-height:1.5}
+
+@media (min-width:900px){
+  .demon{height:min(34vh,280px)}
+  .hand{--cw:132px;gap:14px}
+}
+@media (max-height:640px){
+  .demon{height:22vh}
+  .log{min-height:26px;font-size:15px}
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- ================= MENU ================= -->
+<section id="menu" class="screen on">
+  <svg class="stars" id="stars" width="100%" height="100%"></svg>
+  <svg class="inf-ring" viewBox="0 0 220 100" fill="none">
+    <path d="M110 50 C 80 10, 30 10, 30 50 S 80 90, 110 50 S 140 10, 190 50 S 140 90, 110 50" stroke="#e0bd6e" stroke-width="3" stroke-linecap="round"/>
+  </svg>
+  <div class="logo">Infinity</div>
+  <div class="tag">Карточная партия с демоном вечности — тем, кто держит время в своих когтях</div>
+  <div class="menu-btns">
+    <button class="btn gold" id="bPlay">Играть</button>
+    <button class="btn ghost" id="bRules">Правила</button>
+  </div>
+  <div class="best" id="bestLine"></div>
+  <div class="credits">
+    Автор идеи: <b>PARADISSEDEMON</b><br>
+    Воплотил идею: <b>Claude AI</b>
+  </div>
+</section>
+
+<!-- ================= RULES ================= -->
+<section id="rules" class="screen">
+  <div class="rules-box">
+    <h2>Правила</h2>
+    <p>Вы заперты в комнате с демоном вечности. Он предлагает сыграть в карты. Проиграете — останетесь здесь навсегда.</p>
+    <h3>1. Поиск колоды — 1:30</h3>
+    <ul>
+      <li>В начале партии демон бросает вам одну случайную карту.</li>
+      <li>Остальные карты разбросаны по комнате. Светящиеся можно просто подобрать.</li>
+      <li>Самые сильные спрятаны за головоломками: сейф, сундук, картина, часы, книжный шкаф. Таймер не останавливается, пока вы думаете.</li>
+      <li>Ищите подсказки — например, записку на столе.</li>
+    </ul>
+    <h3>2. Партия с демоном</h3>
+    <ul>
+      <li>Каждый ход — 4 карты в руке и 3 «мгновения» (энергия). Цена карты — в фиолетовом кружке.</li>
+      <li>На ход даётся 30 секунд. Не успели — ход сгорает.</li>
+      <li>Над демоном видно, что он сделает дальше. Фиолетовая рамка — приём времени: перемотка здоровья, остановка времени, спешка, тлен.</li>
+      <li>Сыгранные карты уходят в сброс и возвращаются в колоду, когда она закончится.</li>
+    </ul>
+    <h3>3. Вечность</h3>
+    <ul><li>Победили — демон смеётся и начинает новый круг, сильнее прежнего. Здоровье переносится между кругами (+15). Сколько кругов вы выдержите?</li></ul>
+    <div class="mfoot"><button class="btn gold" id="bRulesBack">Понятно</button></div>
+  </div>
+</section>
+
+<!-- ================= SEARCH ================= -->
+<section id="search" class="screen">
+  <div class="hud">
+    <div class="timer" id="sTimer">1:30</div>
+    <div class="pill"><svg viewBox="0 0 24 24" fill="none" stroke="#e0bd6e" stroke-width="2"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 9h6M9 13h6"/></svg><span id="sCount">0</span></div>
+    <button class="btn small" id="bReady">К столу →</button>
+  </div>
+  <div class="room-wrap">
+    <svg id="room" viewBox="0 0 800 1000" preserveAspectRatio="xMidYMid meet"></svg>
+    <div class="hint-line" id="sHint">Нажимайте на предметы в комнате</div>
+  </div>
+</section>
+
+<!-- ================= PREP ================= -->
+<section id="prep" class="screen">
+  <h2 id="prepTitle">Колода собрана</h2>
+  <div class="sub" id="prepSub"></div>
+  <div class="deckgrid" id="prepGrid"></div>
+  <button class="btn gold" id="bSit">Сесть за стол</button>
+</section>
+
+<!-- ================= DUEL ================= -->
+<section id="duel" class="screen">
+  <div class="dtop">
+    <div class="dloop" id="dLoop">Круг 1</div>
+    <div class="dturn"><svg width="18" height="22" viewBox="0 0 18 22" fill="none" stroke="#e0bd6e" stroke-width="1.8"><path d="M2 1h14M2 21h14M3 1c0 6 12 6 12 10S3 15 3 21M15 1c0 6-12 6-12 10s12 4 12 10"/></svg><div class="hourglass" id="dTime">30</div></div>
+    <div class="intent" id="dIntent"></div>
+    <svg class="demon" id="demonSvg" viewBox="0 0 200 230"></svg>
+    <div class="bars">
+      <div class="chip" id="dBlock"></div>
+      <div class="bar"><i id="dHpBar"></i><span id="dHpTxt"></span></div>
+    </div>
+    <div class="status" id="dStatus"></div>
+  </div>
+  <div class="log" id="dLog"></div>
+  <div class="dbot">
+    <div class="prow">
+      <div class="energy" id="pEnergy"></div>
+      <div class="decks" id="pDecks"></div>
+      <button class="btn small" id="bEnd">Конец хода</button>
+    </div>
+    <div class="bars" style="width:min(560px,100%)">
+      <div class="chip" id="pBlock"></div>
+      <div class="bar p"><i id="pHpBar"></i><span id="pHpTxt"></span></div>
+    </div>
+    <div class="status" id="pStatus"></div>
+    <div class="hand" id="hand"></div>
+  </div>
+</section>
+
+<!-- ================= OVER ================= -->
+<section id="over" class="screen">
+  <h2>Навечно</h2>
+  <p id="overText"></p>
+  <div class="menu-btns" style="margin-top:12px">
+    <button class="btn gold" id="bAgain">Сыграть снова</button>
+    <button class="btn ghost" id="bToMenu">В меню</button>
+  </div>
+</section>
+
+</div>
+
+<div class="modal" id="modal"><div class="mbox" id="mbox"></div></div>
+<div id="toasts"></div>
+<div class="flash" id="flash"></div>
+<div class="timeflash" id="tflash"></div>
+
+<script>
+(()=>{
+'use strict';
+const $=s=>document.querySelector(s);
+const rnd=n=>Math.floor(Math.random()*n);
+const pick=a=>a[rnd(a.length)];
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=rnd(i+1);[a[i],a[j]]=[a[j],a[i]]}return a};
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+const NS='http://www.w3.org/2000/svg';
+
+/* ================= ICONS ================= */
+const ICON={
+ sword:'<path d="M38 6h4v4L20 32l-4-4z"/><path d="M12 30l6 6M9 39l6-6M14 26l8 8"/><circle cx="8" cy="40" r="2"/>',
+ twin:'<path d="M36 6h4v4L22 28l-4-4zM12 6H8v4l18 18 4-4z"/><path d="M14 30l-6 6M34 30l6 6M18 26l-6 6M30 26l6 6"/>',
+ shield:'<path d="M24 5l15 5v11c0 10-7 18-15 22C16 39 9 31 9 21V10z"/><path d="M24 12v24"/>',
+ castle:'<path d="M8 42V18h6v5h5v-5h10v5h5v-5h6v24z"/><path d="M20 42v-9a4 4 0 018 0v9M24 6v8M24 6l7 3-7 3"/>',
+ heart:'<path d="M24 41S7 30 7 18a9 9 0 0117-4 9 9 0 0117 4c0 12-17 23-17 23z"/><path d="M24 20v10M19 25h10"/>',
+ eye:'<path d="M4 24s7-12 20-12 20 12 20 12-7 12-20 12S4 24 4 24z"/><circle cx="24" cy="24" r="6"/><circle cx="24" cy="24" r="2" fill="currentColor"/>',
+ sand:'<path d="M12 5h24M12 43h24M14 5c0 10 20 10 20 19S14 33 14 43M34 5c0 10-20 10-20 19s20 9 20 19"/><path d="M19 39h10l-5-6z" fill="currentColor"/>',
+ flame:'<path d="M24 43c-9 0-14-6-14-13 0-8 7-11 8-19 4 3 6 7 6 11 2-2 3-5 3-8 6 5 11 10 11 16 0 7-5 13-14 13z"/><path d="M24 43c-4 0-6-3-6-6 0-4 4-6 5-9 3 3 7 5 7 9 0 3-2 6-6 6z"/>',
+ anchor:'<circle cx="24" cy="9" r="4"/><path d="M24 13v29M15 21h18M8 30c0 7 7 12 16 12s16-5 16-12M8 30l-3 3M8 30l4 2M40 30l3 3M40 30l-4 2"/>',
+ mirror:'<ellipse cx="24" cy="20" rx="12" ry="15"/><path d="M24 35v8M17 43h14M18 14l6-4M18 21l11-8"/>',
+ theft:'<circle cx="24" cy="26" r="16"/><path d="M24 16v10l7 4M18 4h12M24 4v6"/><path d="M36 10l4-4"/>',
+ inf:'<path d="M24 24c-4-6-8-9-12-9a9 9 0 000 18c4 0 8-3 12-9zm0 0c4 6 8 9 12 9a9 9 0 000-18c-4 0-8 3-12 9z"/>',
+ loop:'<path d="M38 18a15 15 0 10 2 10"/><path d="M40 8v10H30"/><circle cx="24" cy="24" r="3" fill="currentColor"/>',
+ atk:'<path d="M38 6h4v4L20 32l-4-4z"/><path d="M12 30l6 6M9 39l6-6M14 26l8 8"/>',
+ block:'<path d="M24 5l15 5v11c0 10-7 18-15 22C16 39 9 31 9 21V10z"/>',
+ clock:'<circle cx="24" cy="24" r="17"/><path d="M24 13v11l8 5"/>',
+ skull:'<path d="M24 6C14 6 8 13 8 21c0 6 3 9 6 11v6h20v-6c3-2 6-5 6-11 0-8-6-15-16-15z"/><circle cx="18" cy="22" r="3.5"/><circle cx="30" cy="22" r="3.5"/><path d="M20 38v4M24 38v4M28 38v4"/>',
+ zz:'<path d="M12 14h12L12 28h12M28 22h10L28 34h10"/>',
+ x:'<path d="M12 12l24 24M36 12L12 36"/>'
+};
+const svgIcon=(k,col='currentColor',sw=2.6)=>`<svg viewBox="0 0 48 48" fill="none" stroke="${col}" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round">${ICON[k]}</svg>`;
+
+/* ================= CARDS ================= */
+const CARDS={
+ strike:{n:'Удар',c:1,r:'c',i:'sword',t:'6 урона'},
+ guard:{n:'Щит',c:1,r:'c',i:'shield',t:'6 защиты'},
+ mend:{n:'Лечение',c:1,r:'c',i:'heart',t:'+6 здоровья'},
+ blink:{n:'Миг',c:0,r:'c',i:'eye',t:'Взять 2 карты'},
+ sand:{n:'Песочные часы',c:0,r:'c',i:'sand',t:'+1 мгновение, +5 сек к ходу'},
+ twin:{n:'Двойной удар',c:2,r:'u',i:'twin',t:'2 × 6 урона'},
+ bastion:{n:'Бастион',c:2,r:'u',i:'castle',t:'14 защиты'},
+ flame:{n:'Пламя',c:1,r:'u',i:'flame',t:'Поджог: +4 урона в начале хода демона, 3 хода'},
+ anchor:{n:'Якорь',c:1,r:'u',i:'anchor',t:'5 защиты. Отменяет приём времени демона'},
+ mirror:{n:'Зеркало',c:2,r:'r',i:'mirror',t:'Атаки демона в этот ход бьют его самого'},
+ theft:{n:'Украденный час',c:2,r:'r',i:'theft',t:'8 урона. Демон пропускает действие'},
+ inf:{n:'Бесконечность',c:3,r:'r',i:'inf',t:'24 урона'},
+ loop:{n:'Петля',c:1,r:'r',i:'loop',t:'Повторить эффект прошлой карты'}
+};
+const POOL={c:[],u:[],r:[]};
+for(const k in CARDS)POOL[CARDS[k].r].push(k);
+const rollCard=(w)=>{ // w = [c,u,r] weights
+  const s=w[0]+w[1]+w[2];let x=Math.random()*s;
+  const r=x<w[0]?'c':x<w[0]+w[1]?'u':'r';return pick(POOL[r]);
+};
+function cardHTML(id,extra=''){
+  const C=CARDS[id];
+  return `<div class="card ${C.r} ${extra}" data-id="${id}"><div class="cost">${C.c}</div><div class="cn">${C.n}</div><div class="ci">${svgIcon(C.i)}</div><div class="ct">${C.t}</div></div>`;
+}
+
+/* ================= STATE ================= */
+const G={loop:1,php:40,pmax:40,deck:[],best:0};
+try{G.best=+localStorage.getItem('infinity_best')||0}catch(e){}
+function saveBest(){try{localStorage.setItem('infinity_best',String(G.best))}catch(e){}}
+
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on',s.id===id))}
+function toast(html,cls='',ms=2600){
+  const d=document.createElement('div');d.className='toast '+cls;d.innerHTML=html;$('#toasts').appendChild(d);
+  setTimeout(()=>{d.style.transition='opacity .3s';d.style.opacity=0;setTimeout(()=>d.remove(),300)},ms);
+}
+function openModal(html){$('#mbox').innerHTML=html;$('#modal').classList.add('on')}
+function closeModal(){$('#modal').classList.remove('on');$('#mbox').innerHTML='';P.active=null}
+const fmt=s=>{s=Math.max(0,Math.ceil(s));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')};
+
+/* ================= MENU ================= */
+(function stars(){
+  const s=$('#stars');let h='';
+  for(let i=0;i<70;i++){const x=Math.random()*100,y=Math.random()*100,r=Math.random()*1.4+.3;
+    h+=`<circle cx="${x}%" cy="${y}%" r="${r}" fill="#fff" opacity="${(Math.random()*.6+.2).toFixed(2)}"><animate attributeName="opacity" values="0.1;0.9;0.1" dur="${(2+Math.random()*4).toFixed(1)}s" begin="${(Math.random()*3).toFixed(1)}s" repeatCount="indefinite"/></circle>`}
+  s.innerHTML=h;
+})();
+function refreshBest(){$('#bestLine').textContent=G.best?`Рекорд: пройдено кругов — ${G.best}`:''}
+refreshBest();
+$('#bPlay').onclick=newGame;
+$('#bRules').onclick=()=>show('rules');
+$('#bRulesBack').onclick=()=>show('menu');
+$('#bAgain').onclick=newGame;
+$('#bToMenu').onclick=()=>{refreshBest();show('menu')};
+
+function newGame(){G.loop=1;G.php=40;startSearch()}
+
+/* ================= ROOM ================= */
+const ROOM_SVG=`
+<defs>
+ <linearGradient id="gWall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1f1634"/><stop offset="1" stop-color="#140e22"/></linearGradient>
+ <linearGradient id="gFloor" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#22162a"/><stop offset="1" stop-color="#0d0912"/></linearGradient>
+ <radialGradient id="gCandle" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#ffcf7a" stop-opacity=".55"/><stop offset="1" stop-color="#ffcf7a" stop-opacity="0"/></radialGradient>
+ <radialGradient id="gMoon" cx=".4" cy=".4" r=".6"><stop offset="0" stop-color="#fffbe8"/><stop offset="1" stop-color="#cfc6a8"/></radialGradient>
+ <linearGradient id="gWood" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#3b2418"/><stop offset=".5" stop-color="#4f3020"/><stop offset="1" stop-color="#352015"/></linearGradient>
+ <linearGradient id="gMetal" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5b5f6e"/><stop offset="1" stop-color="#2b2d36"/></linearGradient>
+ <pattern id="pRug" width="24" height="24" patternUnits="userSpaceOnUse"><rect width="24" height="24" fill="#5a1a2a"/><path d="M12 2l10 10-10 10L2 12z" fill="none" stroke="#c9963a" stroke-width="1.5" opacity=".7"/></pattern>
+</defs>
+<rect x="-400" y="-900" width="1600" height="1600" fill="url(#gWall)"/>
+<g stroke="#2b2045" stroke-width="2" opacity=".8">${[-300,-200,-100,0,800,900,1000,1100].map(x=>`<line x1="${x}" y1="-900" x2="${x}" y2="700"/>`).join('')}</g>
+<g id="chand"><line x1="400" y1="-900" x2="400" y2="-70" stroke="#5a4a3a" stroke-width="3"/><path d="M330 -70h140l-20 26h-100z" fill="#b48b3c"/><path d="M340 -44c0 22 120 22 120 0" fill="none" stroke="#b48b3c" stroke-width="4"/>${[340,380,420,460].map(x=>`<rect x="${x-4}" y="-96" width="8" height="26" fill="#e9e1cc"/><path d="M${x} -112c-4 6-4 10 0 14 4-4 4-8 0-14z" fill="#ffcf7a"/>`).join('')}<circle cx="400" cy="-80" r="120" fill="url(#gCandle)" opacity=".7"/></g>
+<g stroke="#2b2045" stroke-width="2" opacity=".8">${[100,200,300,400,500,600,700].map(x=>`<line x1="${x}" y1="0" x2="${x}" y2="700"/>`).join('')}</g>
+<rect x="-400" y="680" width="1600" height="22" fill="#2a1c3c"/><rect x="-400" y="700" width="1600" height="900" fill="url(#gFloor)"/>
+<g stroke="#2a1d31" stroke-width="2">${[740,790,850,920,1000,1090,1200,1330].map(y=>`<line x1="-400" y1="${y}" x2="1200" y2="${y}"/>`).join('')}</g>
+<circle cx="380" cy="600" r="210" fill="url(#gCandle)"><animate attributeName="r" values="200;215;205;212;200" dur="2.4s" repeatCount="indefinite"/></circle>
+
+<!-- window -->
+<g class="obj" data-o="window">
+ <path d="M80 330V150a90 90 0 01180 0v180z" fill="#0a1024" stroke="#3b2a55" stroke-width="10"/>
+ <circle cx="205" cy="140" r="30" fill="url(#gMoon)"/><circle cx="194" cy="133" r="5" fill="#d9d1b5"/><circle cx="214" cy="152" r="4" fill="#d9d1b5"/>
+ <g fill="#fff">${[[110,110],[130,220],[240,240],[100,280],[170,180],[230,290]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="1.6"/>`).join('')}</g>
+ <path d="M170 60v270M80 210h180" stroke="#3b2a55" stroke-width="7"/>
+ <rect x="68" y="328" width="204" height="12" rx="3" fill="#3b2a55"/>
+</g>
+
+<!-- painting -->
+<g class="obj" data-o="painting">
+ <rect x="512" y="82" width="206" height="176" rx="6" fill="#b48b3c"/>
+ <rect x="524" y="94" width="182" height="152" fill="#1a0d1f"/>
+ <path d="M540 230c30-70 120-70 150 0z" fill="#2b1236"/>
+ <ellipse cx="615" cy="165" rx="52" ry="26" fill="#e9e1cc"/><circle cx="615" cy="165" r="20" fill="#7a2030"/><ellipse cx="615" cy="165" rx="5" ry="18" fill="#0a0408"/>
+ <g fill="#ef4f63"><circle cx="545" cy="110" r="5"/></g><g fill="#6aa8ff"><circle cx="685" cy="110" r="5"/></g><g fill="#5fd39a"><circle cx="545" cy="230" r="5"/></g><g fill="#e0bd6e"><circle cx="685" cy="230" r="5"/></g>
+</g>
+
+<!-- bookshelf -->
+<g class="obj" data-o="shelf">
+ <rect x="36" y="380" width="236" height="350" fill="url(#gWood)" stroke="#24150d" stroke-width="6"/>
+ ${[470,560,650].map(y=>`<rect x="40" y="${y}" width="228" height="10" fill="#24150d"/>`).join('')}
+ ${(()=>{let h='';const cols=['#6b2b3a','#2b4a6b','#3e6b45','#6b5a2b','#4a2b6b','#7a3d2a'];
+   [[390,470],[480,560],[570,650],[660,725]].forEach(([y0,y1],ri)=>{let x=48;let k=ri*3;while(x<250){const w=12+((k*7)%9);const hh=(y1-y0)-8-((k*5)%22);
+     if(x+w>262)break;h+=`<rect x="${x}" y="${y1-hh}" width="${w}" height="${hh}" fill="${cols[k%6]}" stroke="#0006"/>`;h+=`<rect x="${x+2}" y="${y1-hh+8}" width="${w-4}" height="3" fill="#e0bd6e66"/>`;x+=w+2;k++}});return h})()}
+</g>
+
+<!-- clock -->
+<g class="obj" data-o="clock">
+ <path d="M600 380l15-40h80l15 40z" fill="#3d2418"/>
+ <rect x="606" y="378" width="98" height="380" fill="url(#gWood)" stroke="#24150d" stroke-width="5"/>
+ <circle cx="655" cy="430" r="38" fill="#e9e1cc" stroke="#b48b3c" stroke-width="5"/>
+ ${Array.from({length:12},(_,i)=>{const a=i*Math.PI/6;return `<line x1="${655+31*Math.sin(a)}" y1="${430-31*Math.cos(a)}" x2="${655+35*Math.sin(a)}" y2="${430-35*Math.cos(a)}" stroke="#222" stroke-width="2"/>`}).join('')}
+ <line x1="655" y1="430" x2="655" y2="402" stroke="#111" stroke-width="3"><animateTransform attributeName="transform" type="rotate" from="360 655 430" to="0 655 430" dur="8s" repeatCount="indefinite"/></line>
+ <line x1="655" y1="430" x2="675" y2="430" stroke="#111" stroke-width="4"/>
+ <rect x="626" y="490" width="58" height="230" rx="4" fill="#0e0812" stroke="#b48b3c" stroke-width="2"/>
+ <g><line x1="655" y1="495" x2="655" y2="650" stroke="#b48b3c" stroke-width="3"/><circle cx="655" cy="660" r="16" fill="#d9b56a"/>
+  <animateTransform attributeName="transform" type="rotate" values="-14 655 495;14 655 495;-14 655 495" dur="2s" repeatCount="indefinite"/></g>
+</g>
+
+<!-- table -->
+<g>
+ <rect x="292" y="640" width="236" height="18" rx="3" fill="#4f3020" stroke="#24150d" stroke-width="3"/>
+ <rect x="302" y="656" width="14" height="120" fill="#3b2418"/><rect x="504" y="656" width="14" height="120" fill="#3b2418"/>
+ <!-- candle -->
+ <rect x="350" y="590" width="18" height="50" rx="3" fill="#e9e1cc"/>
+ <path d="M359 572c-6 8-6 14 0 18 6-4 6-10 0-18z" fill="#ffcf7a"><animate attributeName="d" values="M359 572c-6 8-6 14 0 18 6-4 6-10 0-18z;M360 568c-7 9-6 16-1 22 6-5 6-12 1-22z;M359 572c-6 8-6 14 0 18 6-4 6-10 0-18z" dur="0.9s" repeatCount="indefinite"/></path>
+</g>
+<g class="obj note-obj" data-o="note">
+ <path d="M420 626l60-6 4 20-60 6z" fill="#e8dfc4" stroke="#a89a75"/>
+ <path d="M430 630l38-4M432 636l30-3" stroke="#5a4a3a" stroke-width="1.5"/>
+</g>
+
+<!-- safe (under table) -->
+<g class="obj" data-o="safe">
+ <rect x="350" y="690" width="120" height="96" rx="6" fill="url(#gMetal)" stroke="#1a1b22" stroke-width="4"/>
+ <rect x="360" y="700" width="100" height="76" rx="4" fill="none" stroke="#7c8090" stroke-width="2"/>
+ <circle cx="410" cy="738" r="16" fill="#2b2d36" stroke="#a8acb8" stroke-width="3"/>
+ <path d="M410 724v8M424 738h-8M410 752v-8M396 738h8" stroke="#a8acb8" stroke-width="2"/>
+ <rect x="440" y="728" width="8" height="22" rx="2" fill="#a8acb8"/>
+</g>
+
+<!-- rug -->
+<g class="obj" data-o="rug">
+ <ellipse cx="300" cy="900" rx="210" ry="52" fill="url(#pRug)" stroke="#c9963a" stroke-width="4"/>
+ <path id="rugCorner" d="M95 895c8-22 32-26 50-18l-14 32z" fill="#3a0f1a" stroke="#c9963a" stroke-width="2" opacity="0"/>
+</g>
+
+<!-- vase -->
+<g class="obj" data-o="vase" id="vaseG">
+ <path d="M110 960c-30-10-34-70-10-96 6-8 6-18 0-26h40c-6 8-6 18 0 26 24 26 20 86-10 96z" fill="#2c4f74" stroke="#14273b" stroke-width="3"/>
+ <path d="M104 880c14 6 30 6 44 0" stroke="#e0bd6e" stroke-width="3" fill="none"/>
+ <path d="M100 910c18 6 36 6 52 0" stroke="#e0bd6e" stroke-width="2" fill="none" opacity=".7"/>
+ <g id="vaseCracks" stroke="#0b0812" stroke-width="2.5" fill="none"></g>
+</g>
+
+<!-- chest -->
+<g class="obj" data-o="chest">
+ <rect x="548" y="836" width="190" height="110" rx="6" fill="url(#gWood)" stroke="#24150d" stroke-width="4"/>
+ <path id="chestLid" d="M548 840v-24c0-26 190-26 190 0v24z" fill="#5a3826" stroke="#24150d" stroke-width="4"/>
+ <rect x="548" y="852" width="190" height="10" fill="#b48b3c"/>
+ <rect x="574" y="836" width="10" height="110" fill="#b48b3c"/><rect x="702" y="836" width="10" height="110" fill="#b48b3c"/>
+ <rect x="630" y="846" width="26" height="32" rx="4" fill="#d9b56a" stroke="#7a5a20" stroke-width="2"/>
+ <circle cx="643" cy="858" r="4" fill="#2b1a0c"/><rect x="641" y="860" width="4" height="10" fill="#2b1a0c"/>
+</g>
+<g id="loose"></g>
+`;
+
+const SPOTS=[[170,318],[150,366],[655,330],[495,616],[240,960],[470,965],[760,700]];
+let S={}; // search state
+
+function startSearch(){
+  closeModal();
+  S={time:90,cards:[],done:{},running:false,code:[1+rnd(9),rnd(10),rnd(10)],vaseTaps:0,
+     rewards:{
+       safe:[rollCard([0,0,1]),rollCard([0,1,0])],
+       chest:[rollCard([0,7,3])],painting:[rollCard([0,6,4])],clock:[rollCard([0,7,3])],shelf:[rollCard([0,6,4])],
+       vase:[rollCard([5,4,1])],rug:[rollCard([7,3,0])]
+     }};
+  $('#room').innerHTML=ROOM_SVG;
+  const lg=$('#loose');
+  shuffle(SPOTS).slice(0,4).forEach(([x,y],i)=>{
+    const id=rollCard([8,2,0]);const a=(rnd(40)-20);
+    const g=document.createElementNS(NS,'g');g.setAttribute('class','loose');g.dataset.card=id;
+    g.innerHTML=`<g transform="translate(${x} ${y}) rotate(${a})"><rect x="-30" y="-30" width="60" height="60" fill="transparent"/><rect x="-13" y="-18" width="26" height="36" rx="3" fill="#2d2047" stroke="#e0bd6e" stroke-width="2.5"/><path d="M-6 0c-2-3-4-4-6-4a4 4 0 000 8c2 0 4-1 6-4zm0 0c2 3 4 4 6 4a4 4 0 000-8c-2 0-4 1-6 4z" transform="translate(6 0)" fill="none" stroke="#e0bd6e" stroke-width="1.6"/></g>`;
+    g.addEventListener('click',e=>{e.stopPropagation();if(!S.running)return;gain(id);g.remove()});
+    lg.appendChild(g);
+  });
+  $('#room').querySelectorAll('.obj').forEach(o=>o.addEventListener('click',()=>objClick(o.dataset.o,o)));
+  $('#sCount').textContent='0';$('#sTimer').textContent='1:30';$('#sTimer').classList.remove('warn');
+  $('#sHint').textContent='Нажимайте на предметы в комнате';
+  show('search');fitRoom();
+  // demon gift
+  const gift=rollCard([6,3,1]);
+  openModal(`<div class="mhead"><h3>Круг ${G.loop}</h3></div>
+   <div class="mtext">Демон вечности щёлкает пальцами — время замирает. «Найди свою колоду, смертный. У тебя полторы минуты. А это — мой подарок».</div>
+   <div style="display:flex;justify-content:center;--cw:120px;margin:12px 0">${cardHTML(gift)}</div>
+   <div class="mfoot"><button class="btn gold" id="bGo">Искать карты</button></div>`);
+  $('#bGo').onclick=()=>{closeModal();gain(gift,true);S.running=true;S.last=performance.now();tickSearch()};
+}
+function gain(id,silent){
+  S.cards.push(id);$('#sCount').textContent=S.cards.length;
+  const C=CARDS[id];const rn={c:'обычная',u:'редкая',r:'легендарная'}[C.r];
+  if(!silent)toast(`Найдена карта: <b>${C.n}</b> <span style="opacity:.7">(${rn})</span>`,C.r,2000);
+}
+function tickSearch(){
+  if(!S.running)return;
+  const now=performance.now();S.time-=(now-S.last)/1000;S.last=now;
+  const t=fmt(S.time);$('#sTimer').textContent=t;$('#sTimer').classList.toggle('warn',S.time<=15);
+  const mt=$('#mTimer');if(mt){mt.textContent=t}
+  if(S.time<=0){S.running=false;closeModal();toast('<b>Время вышло!</b>','r');setTimeout(toPrep,900);return}
+  requestAnimationFrame(tickSearch);
+}
+$('#bReady').onclick=()=>{if(!S.running)return;S.running=false;closeModal();toPrep()};
+
+function finishObj(name){
+  S.done[name]=true;
+  const o=$(`#room .obj[data-o="${name}"]`);if(o)o.classList.add('done');
+  (S.rewards[name]||[]).forEach(id=>gain(id));
+}
+function objClick(name){
+  if(!S.running||P.active)return;
+  if(name==='note'){const n=performance.now();if(S.noteT&&n-S.noteT<3500)return;S.noteT=n;toast(`На записке дрожащим почерком: <b style="font-size:20px;letter-spacing:.2em">${S.code.join(' ')}</b>`,'',3500);return}
+  if(name==='window'){toast('За окном — ночь, которая никогда не кончится.');return}
+  if(S.done[name]){toast('Здесь больше ничего нет.','',1200);return}
+  if(name==='rug'){$('#rugCorner').setAttribute('opacity','1');toast('Под углом ковра что-то было…','',1200);finishObj('rug');return}
+  if(name==='vase'){
+    S.vaseTaps++;
+    const cr=$('#vaseCracks');
+    const paths=['M118 870l8 20-6 14','M134 900l-10 16 8 18','M112 930l14-6 10 12'];
+    cr.innerHTML=paths.slice(0,S.vaseTaps).map(p=>`<path d="${p}"/>`).join('');
+    if(S.vaseTaps>=3){$('#vaseG').style.opacity='.25';toast('Ваза разбилась!','',1200);finishObj('vase')}
+    else toast(['Ваза треснула…','Ещё немного…'][S.vaseTaps-1],'',900);
+    return;
+  }
+  const fn={safe:pzSafe,chest:pzLights,painting:pzSimon,clock:pzClock,shelf:pzBooks}[name];
+  if(fn){P.active=name;fn()}
+}
+
+function fitRoom(){
+  const r=$('#room');if(!r.isConnected)return;const w=r.clientWidth||1,h=r.clientHeight||1;
+  const VW=730,VH=1000;let vw=VW,vh=VH;
+  if(h/w>VH/VW){vh=VW*h/w}else{vw=VH*w/h}
+  vw=Math.min(vw,1300);
+  r.setAttribute('viewBox',`${400-vw/2} ${500-vh/2-(vh-VH)*0.12} ${vw} ${vh}`);
+}
+addEventListener('resize',fitRoom);
+
+/* ================= PUZZLES ================= */
+const P={active:null};
+function pzShell(title,text,body){
+  openModal(`<div class="mhead"><h3>${title}</h3><div class="mtimer" id="mTimer">${fmt(S.time)}</div></div>
+   <div class="mtext">${text}</div><div id="pz">${body}</div>
+   <div class="mfoot"><button class="btn ghost small" id="bLeave">Отойти</button></div>`);
+  $('#bLeave').onclick=closeModal;
+}
+function solved(name,msg){
+  toast(msg,'',1500);closeModal();finishObj(name);
+}
+function pzSafe(){
+  const v=[0,0,0];
+  pzShell('Сейф','Трёхзначный кодовый замок. Где-то в комнате должна быть подсказка.',
+   `<div class="dials">${v.map((_,i)=>`<div class="dial"><button data-i="${i}" data-d="1">▲</button><div class="dg" id="dg${i}">0</div><button data-i="${i}" data-d="-1">▼</button></div>`).join('')}</div>
+    <div class="mfoot" style="margin-top:14px"><button class="btn gold small" id="bOpen">Открыть</button></div>`);
+  $('#pz').querySelectorAll('.dial button').forEach(b=>b.onclick=()=>{const i=+b.dataset.i;v[i]=(v[i]+ +b.dataset.d+10)%10;$('#dg'+i).textContent=v[i]});
+  $('#bOpen').onclick=()=>{
+    if(v.join('')===S.code.join(''))solved('safe','Сейф открыт — внутри две карты!');
+    else{const d=$('.dials');d.classList.remove('shake');void d.offsetWidth;d.classList.add('shake')}
+  };
+}
+function pzLights(){
+  let L=Array(9).fill(1);
+  const tog=i=>{const x=i%3,y=(i/3)|0;[[0,0],[1,0],[-1,0],[0,1],[0,-1]].forEach(([dx,dy])=>{const nx=x+dx,ny=y+dy;if(nx>=0&&nx<3&&ny>=0&&ny<3)L[ny*3+nx]^=1})};
+  shuffle([0,1,2,3,4,5,6,7,8]).slice(0,3).forEach(tog);
+  if(L.every(Boolean))tog(4);
+  pzShell('Сундук','Замок из девяти рун. Нажатие переключает руну и её соседей. Зажгите все.',`<div class="lgrid">${L.map((_,i)=>`<button class="lcell" data-i="${i}"></button>`).join('')}</div>`);
+  const draw=()=>$('#pz').querySelectorAll('.lcell').forEach((c,i)=>c.classList.toggle('on',!!L[i]));
+  draw();
+  $('#pz').querySelectorAll('.lcell').forEach(c=>c.onclick=()=>{tog(+c.dataset.i);draw();if(L.every(Boolean))setTimeout(()=>solved('chest','Сундук щёлкнул и открылся!'),250)});
+}
+function pzSimon(){
+  const seq=Array.from({length:4},()=>rnd(4));let pos=0,lock=true;
+  pzShell('Картина','Глаз на картине следит за вами. Камни в углах вспыхивают — повторите их порядок.',
+   `<div class="sgrid">${[0,1,2,3].map(i=>`<button class="sg" data-i="${i}"></button>`).join('')}</div><div class="sstat" id="sstat"></div>`);
+  const gems=[...$('#pz').querySelectorAll('.sg')];
+  const flash=async i=>{gems[i].classList.add('lit');await wait(380);gems[i].classList.remove('lit');await wait(170)};
+  const play=async()=>{lock=true;pos=0;$('#sstat').textContent='Смотрите…';await wait(500);
+    for(const i of seq){if(P.active!=='painting')return;await flash(i)}$('#sstat').textContent='Ваш черёд';lock=false};
+  gems.forEach(g=>g.onclick=async()=>{
+    if(lock)return;const i=+g.dataset.i;flash(i);
+    if(i===seq[pos]){pos++;if(pos===seq.length){lock=true;setTimeout(()=>solved('painting','Картина отъехала — за ней тайник!'),350)}}
+    else{$('#sstat').textContent='Неверно! Ещё раз…';lock=true;await wait(600);play()}
+  });
+  play();
+}
+const ROM=['XII','I','II','III','IV','V','VI','VII','VIII','IX','X','XI'];
+function pzClock(){
+  let h=12,m=0;let th,tm;do{th=1+rnd(12);tm=rnd(4)*15}while(th===12&&tm===0);
+  pzShell('Часы',`На циферблате выцарапано: «Верни меня в <b>${th}:${String(tm).padStart(2,'0')}</b>».`,
+   `<svg class="clockface" viewBox="0 0 200 200"><circle cx="100" cy="100" r="92" fill="#e9e1cc" stroke="#b48b3c" stroke-width="8"/>
+    ${ROM.map((r,i)=>{const a=i*Math.PI/6;return `<text x="${100+70*Math.sin(a)}" y="${100-70*Math.cos(a)+6}" text-anchor="middle" font-family="Georgia,serif" font-size="16" font-weight="700" fill="#2b1a0c">${r}</text>`}).join('')}
+    <line id="hH" x1="100" y1="100" x2="100" y2="58" stroke="#1a0d0d" stroke-width="7" stroke-linecap="round" style="transition:transform .2s;transform-origin:100px 100px"/>
+    <line id="hM" x1="100" y1="100" x2="100" y2="30" stroke="#7a2030" stroke-width="4" stroke-linecap="round" style="transition:transform .2s;transform-origin:100px 100px"/>
+    <circle cx="100" cy="100" r="7" fill="#b48b3c"/></svg>
+    <div class="cbtns"><button class="btn small" data-a="h-">⟲ Часы</button><button class="btn small" data-a="h+">Часы ⟳</button>
+    <button class="btn small" data-a="m-">⟲ Минуты</button><button class="btn small" data-a="m+">Минуты ⟳</button></div>`);
+  let ha=0,ma=0;
+  const draw=()=>{$('#hH').style.transform=`rotate(${ha}deg)`;$('#hM').style.transform=`rotate(${ma}deg)`};
+  $('#pz').querySelectorAll('.cbtns button').forEach(b=>b.onclick=()=>{
+    const a=b.dataset.a;
+    if(a==='h+'){h=h%12+1;ha+=30}if(a==='h-'){h=(h+10)%12+1;ha-=30}
+    if(a==='m+'){m=(m+15)%60;ma+=90}if(a==='m-'){m=(m+45)%60;ma-=90}
+    draw();if(h===th&&m===tm)setTimeout(()=>solved('clock','Часы пробили — из корпуса выпала карта!'),300);
+  });
+}
+function pzBooks(){
+  pzShell('Книжный шкаф','На корешках выдавлен знак бесконечности. Один из них — подделка. Найдите её (ошибка: −3 сек).','<div class="bgrid" id="bgrid"></div>');
+  const build=()=>{
+    const odd=rnd(16);const tilt=rnd(2)?1:-1;
+    $('#bgrid').innerHTML=Array.from({length:16},(_,i)=>{
+      const top=i===odd?7.6:10;const rot=(rnd(3)-1)*8;
+      return `<button class="bk" data-i="${i}"><svg viewBox="0 0 40 50" style="transform:rotate(${rot}deg)"><circle cx="20" cy="${35-10-top}" r="${top}" fill="none" stroke="#e0bd6e" stroke-width="3"/><circle cx="20" cy="35" r="10" fill="none" stroke="#e0bd6e" stroke-width="3"/></svg></button>`}).join('');
+    $('#bgrid').querySelectorAll('.bk').forEach(b=>b.onclick=()=>{
+      if(+b.dataset.i===odd)solved('shelf','Фальшивая книга сдвинулась — за ней карта!');
+      else{S.time-=3;toast('Не та… (−3 сек)','',900);build()}
+    });
+  };
+  build();
+}
+
+/* ================= PREP ================= */
+function toPrep(){
+  G.deck=S.cards.slice();
+  $('#prepTitle').textContent=G.deck.length?'Колода собрана':'Пустые руки';
+  $('#prepSub').textContent=G.deck.length?`У вас ${G.deck.length} ${plural(G.deck.length,'карта','карты','карт')}. Демон тасует свою колоду и ждёт за столом.`:'';
+  const order={r:0,u:1,c:2};
+  $('#prepGrid').innerHTML=G.deck.slice().sort((a,b)=>order[CARDS[a].r]-order[CARDS[b].r]).map(id=>cardHTML(id)).join('');
+  show('prep');
+}
+const plural=(n,a,b,c)=>{const m=n%10,h=n%100;return m===1&&h!==11?a:m>=2&&m<=4&&(h<10||h>=20)?b:c};
+$('#bSit').onclick=startDuel;
+
+/* ================= DEMON SVG ================= */
+$('#demonSvg').innerHTML=`
+<defs><radialGradient id="dEye" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#fff"/><stop offset=".4" stop-color="#d7b8ff"/><stop offset="1" stop-color="#9b6bff" stop-opacity="0"/></radialGradient>
+<linearGradient id="dRobe" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a1745"/><stop offset="1" stop-color="#0b0812" stop-opacity="0"/></linearGradient></defs>
+<path d="M100 70c-50 10-80 70-86 160h172c-6-90-36-150-86-160z" fill="url(#dRobe)"/>
+<path d="M70 40c-20-14-28-34-24-40 6 14 18 22 34 26zM130 40c20-14 28-34 24-40-6 14-18 22-34 26z" fill="#c9a86a"/>
+<path d="M100 22c-24 0-38 18-38 40 0 26 18 44 38 50 20-6 38-24 38-50 0-22-14-40-38-40z" fill="#160d24" stroke="#3a2b55" stroke-width="2"/>
+<ellipse cx="84" cy="62" rx="14" ry="9" fill="url(#dEye)"><animate attributeName="ry" values="9;9;1;9;9" keyTimes="0;.9;.93;.96;1" dur="5s" repeatCount="indefinite"/></ellipse>
+<ellipse cx="116" cy="62" rx="14" ry="9" fill="url(#dEye)"><animate attributeName="ry" values="9;9;1;9;9" keyTimes="0;.9;.93;.96;1" dur="5s" repeatCount="indefinite"/></ellipse>
+<path d="M86 88q14 8 28 0" stroke="#9b6bff" stroke-width="2" fill="none"/>
+<circle cx="100" cy="150" r="30" fill="#120b1e" stroke="#e0bd6e" stroke-width="3"/>
+${Array.from({length:12},(_,i)=>{const a=i*Math.PI/6;return `<circle cx="${100+24*Math.sin(a)}" cy="${150-24*Math.cos(a)}" r="1.8" fill="#e0bd6e"/>`}).join('')}
+<line x1="100" y1="150" x2="100" y2="130" stroke="#e0bd6e" stroke-width="3" stroke-linecap="round"><animateTransform attributeName="transform" type="rotate" from="0 100 150" to="-360 100 150" dur="6s" repeatCount="indefinite"/></line>
+<line x1="100" y1="150" x2="112" y2="150" stroke="#9b6bff" stroke-width="3" stroke-linecap="round"><animateTransform attributeName="transform" type="rotate" from="0 100 150" to="360 100 150" dur="40s" repeatCount="indefinite"/></line>
+<path d="M40 150c-14 10-22 24-20 40M160 150c14 10 22 24 20 40" stroke="#2a1745" stroke-width="12" stroke-linecap="round" fill="none"/>
+`;
+
+/* ================= DUEL ================= */
+let B=null,uid=0;
+const INTENTS={
+ atk:{i:'atk',time:false},heavy:{i:'atk',time:false},double:{i:'twin',time:false},block:{i:'block',time:false},
+ rewind:{i:'loop',time:true},stop:{i:'clock',time:true},rush:{i:'sand',time:true},age:{i:'skull',time:true},
+ stun:{i:'zz',time:false},cancel:{i:'x',time:false}
+};
+function dStats(){const L=G.loop-1;return{hp:44+18*L,atk:7+2*L,heavy:13+3*L,dbl:5+2*L,block:10+3*L}}
+
+function startDuel(){
+  const st=dStats();
+  B={dhp:st.hp,dmax:st.hp,dblock:0,pblock:0,energy:3,draw:shuffle(G.deck.map(id=>({u:++uid,id}))),hand:[],disc:[],
+     intent:null,burn:{d:0,t:0},reflect:false,hist:[st.hp],penalty:0,aging:false,rush:false,time:30,turn:0,busy:true,last:null,lastTime:null,prevTime:false};
+  $('#dLoop').textContent='Круг '+G.loop;
+  show('duel');
+  log('Демон раскладывает карты. «Сыграем, смертный?»');
+  setTimeout(startPlayerTurn,700);
+}
+function log(t){$('#dLog').textContent=t}
+function chooseIntent(){
+  const st=dStats();let k;
+  if(B.turn===1)k='atk';
+  else{
+    const opts=[['atk',34],['heavy',14],['double',12],['block',10],['rewind',8],['stop',8],['rush',7],['age',7]];
+    let tries=0;
+    do{let s=opts.reduce((a,o)=>a+o[1],0),x=Math.random()*s;for(const o of opts){x-=o[1];if(x<0){k=o[0];break}}tries++}
+    while(tries<20&&((INTENTS[k].time&&B.prevTime)||(k==='rewind'&&B.hist.length<2)||(k==='age'&&G.deck.length<3)));
+  }
+  B.prevTime=INTENTS[k].time;
+  const v={atk:st.atk,heavy:st.heavy,double:st.dbl,block:st.block}[k]||0;
+  B.intent={k,v};
+}
+function intentHTML(){
+  const it=B.intent,I=INTENTS[it.k];
+  const txt={atk:`Атака: <b>${it.v}</b> урона`,heavy:`Сокрушение: <b>${it.v}</b> урона`,double:`Ускорение: атакует дважды по <b>${it.v}</b>`,
+    block:`Защита: <b>${it.v}</b> брони`,rewind:'<b>Перемотка</b>: вернёт здоровье, что было 2 хода назад',
+    stop:'<b>Стоп-время</b>: −1 мгновение в ваш следующий ход',rush:'<b>Спешка</b>: на следующий ход только 10 сек',
+    age:'<b>Тлен</b>: 2 карты следующей руки рассыплются',stun:'Оцепенел — пропускает действие',cancel:'Приём времени сорван якорем'}[it.k];
+  const col=I.time?'#b893ff':it.k==='block'?'#6aa8ff':(it.k==='stun'||it.k==='cancel')?'#a397bb':'#ef4f63';
+  $('#dIntent').className='intent'+(I.time?' time':'');
+  $('#dIntent').innerHTML=svgIcon(I.i,col,3)+'<span>'+txt+'</span>';
+}
+function drawOne(){
+  if(!B.draw.length){if(!B.disc.length)return false;B.draw=shuffle(B.disc);B.disc=[];}
+  B.hand.push(B.draw.pop());return true;
+}
+function startPlayerTurn(){
+  if(G.php<=0)return;
+  B.turn++;B.pblock=0;B.reflect=false;
+  B.disc.push(...B.hand);B.hand=[];
+  B.energy=Math.max(0,3-B.penalty);
+  const pen=B.penalty;B.penalty=0;
+  for(let i=0;i<4;i++)if(!drawOne())break;
+  let msg='Ваш ход.';
+  if(pen)msg='Время застыло: у вас на одно мгновение меньше.';
+  if(B.aging&&B.hand.length){
+    B.aging=false;const lost=[];
+    for(let i=0;i<2&&B.hand.length;i++){const c=B.hand.splice(rnd(B.hand.length),1)[0];B.disc.push(c);lost.push(CARDS[c.id].n)}
+    msg='Тлен! Рассыпались: '+lost.join(', ')+'.';timeFx();
+  }
+  B.aging=false;
+  B.time=B.rush?10:30;if(B.rush)msg+=' Спешка — всего 10 секунд!';B.rush=false;
+  chooseIntent();intentHTML();
+  log(msg);
+  B.busy=false;render();
+  B.lastTime=performance.now();tickTurn();
+}
+function tickTurn(){
+  if(!B||B.busy||!$('#duel').classList.contains('on'))return;
+  const now=performance.now();B.time-=(now-B.lastTime)/1000;B.lastTime=now;
+  const t=Math.max(0,Math.ceil(B.time));$('#dTime').textContent=t;$('#dTime').classList.toggle('warn',B.time<=5);
+  if(B.time<=0){log('Песок иссяк — ход сгорает.');endTurn();return}
+  requestAnimationFrame(tickTurn);
+}
+function render(){
+  const pct=(a,b)=>Math.max(0,a/b*100)+'%';
+  $('#dHpBar').style.width=pct(B.dhp,B.dmax);$('#dHpTxt').textContent=`${Math.max(0,B.dhp)} / ${B.dmax}`;
+  $('#pHpBar').style.width=pct(G.php,G.pmax);$('#pHpTxt').textContent=`${Math.max(0,G.php)} / ${G.pmax}`;
+  $('#dBlock').innerHTML=svgIcon('block','#6aa8ff',3)+B.dblock;$('#dBlock').classList.toggle('zero',!B.dblock);
+  $('#pBlock').innerHTML=svgIcon('block','#6aa8ff',3)+B.pblock;$('#pBlock').classList.toggle('zero',!B.pblock);
+  let e='';for(let i=0;i<Math.max(3,B.energy);i++)e+=`<div class="orb ${i<B.energy?'':'off'}"></div>`;$('#pEnergy').innerHTML=e;
+  $('#pDecks').innerHTML=`<span>Колода: ${B.draw.length}</span><span>Сброс: ${B.disc.length}</span>`;
+  const ds=[];if(B.burn.t>0)ds.push(`<span class="st bad">Пламя ${B.burn.d} × ${B.burn.t}</span>`);
+  $('#dStatus').innerHTML=ds.join('');
+  const ps=[];if(B.reflect)ps.push('<span class="st good">Зеркало</span>');if(B.penalty)ps.push('<span class="st bad">Стоп-время</span>');
+  if(B.rush)ps.push('<span class="st bad">Спешка</span>');if(B.aging)ps.push('<span class="st bad">Тлен</span>');
+  $('#pStatus').innerHTML=ps.join('');
+  const h=$('#hand');
+  if(!B.hand.length)h.innerHTML=`<div class="empty">${G.deck.length?'Рука пуста':'У вас нет карт…'}</div>`;
+  else h.innerHTML=B.hand.map(c=>cardHTML(c.id,CARDS[c.id].c>B.energy||B.busy?'dim':'').replace('class="card','data-u="'+c.u+'" class="card')).join('');
+  h.querySelectorAll('.card').forEach(el=>el.onclick=()=>playCard(+el.dataset.u,el));
+  $('#bEnd').disabled=B.busy;
+}
+function floatAt(el,txt,col){
+  const r=el.getBoundingClientRect();const d=document.createElement('div');d.className='float';d.textContent=txt;d.style.color=col;
+  d.style.left=(r.left+r.width/2-20+rnd(30)-15)+'px';d.style.top=(r.top+r.height*.35)+'px';document.body.appendChild(d);setTimeout(()=>d.remove(),1000);
+}
+function hitDemon(n,pierce){
+  let d=n;if(!pierce){const ab=Math.min(B.dblock,d);B.dblock-=ab;d-=ab}
+  B.dhp-=d;const s=$('#demonSvg');s.classList.remove('hit');void s.getBoundingClientRect();s.classList.add('hit');
+  floatAt(s,d?'-'+d:'блок',d?'#ef4f63':'#6aa8ff');
+}
+function hitPlayer(n){
+  if(B.reflect){hitDemon(n);log(`Зеркало! Удар в ${n} обрушился на демона.`);return}
+  let d=n;const ab=Math.min(B.pblock,d);B.pblock-=ab;d-=ab;G.php-=d;
+  if(d){const f=$('#flash');f.classList.remove('go');void f.offsetWidth;f.classList.add('go')}
+  floatAt($('#pHpBar'),d?'-'+d:'блок',d?'#ef4f63':'#6aa8ff');
+}
+function timeFx(){const f=$('#tflash');f.classList.remove('go');void f.offsetWidth;f.classList.add('go')}
+const EFFECT={
+ strike:()=>hitDemon(6),guard:()=>B.pblock+=6,
+ mend:()=>{G.php=Math.min(G.pmax,G.php+6);floatAt($('#pHpBar'),'+6','#5fd39a')},
+ blink:()=>{drawOne();drawOne()},
+ sand:()=>{B.energy+=1;B.time+=5},
+ twin:()=>{hitDemon(6);setTimeout(()=>{if(B.dhp>0){hitDemon(6);render();checkWin()}},220)},
+ bastion:()=>B.pblock+=14,
+ flame:()=>{B.burn.d+=4;B.burn.t=3},
+ anchor:()=>{B.pblock+=5;if(INTENTS[B.intent.k].time){B.intent={k:'cancel',v:0};intentHTML()}},
+ mirror:()=>{B.reflect=true},
+ theft:()=>{hitDemon(8);B.intent={k:'stun',v:0};intentHTML();timeFx()},
+ inf:()=>hitDemon(24)
+};
+const PLAYLOG={strike:'Удар!',guard:'Вы прикрылись щитом.',mend:'Раны затягиваются.',blink:'Миг — две новые карты.',sand:'Песок течёт назад: +1 мгновение и 5 секунд.',
+ twin:'Двойной удар!',bastion:'Бастион поднят.',flame:'Демон вспыхнул!',anchor:'Якорь брошен — время не сдвинется.',mirror:'Зеркало ждёт удара.',
+ theft:'Вы украли у демона целый час!',inf:'БЕСКОНЕЧНОСТЬ!',loop:'Петля повторяет прошлое.'};
+function playCard(u,el){
+  if(B.busy)return;
+  const idx=B.hand.findIndex(c=>c.u===u);if(idx<0)return;
+  const c=B.hand[idx],C=CARDS[c.id];
+  if(C.c>B.energy){el.classList.remove('shake');void el.offsetWidth;el.classList.add('shake');log('Не хватает мгновений.');return}
+  if(c.id==='loop'&&!B.last){el.classList.remove('shake');void el.offsetWidth;el.classList.add('shake');log('Петле нечего повторить.');return}
+  B.energy-=C.c;B.hand.splice(idx,1);B.disc.push(c);
+  if(c.id==='loop'){EFFECT[B.last]();log('Петля: «'+CARDS[B.last].n+'» ещё раз!')}
+  else{EFFECT[c.id]();B.last=c.id;log(PLAYLOG[c.id])}
+  render();checkWin();
+}
+function checkWin(){
+  if(B.dhp>0||B.over)return false;
+  B.over=true;B.busy=true;render();
+  G.best=Math.max(G.best,G.loop);saveBest();
+  setTimeout(()=>{
+    const heal=Math.min(15,G.pmax-G.php);G.php+=heal;
+    openModal(`<div class="mhead"><h3>Демон повержен?</h3></div>
+     <div class="mtext">Демон рассыпается песком… и собирается вновь, смеясь. «Ты думал, у вечности бывает конец? Ещё круг».<br><br>
+     Пройдено кругов: <b style="color:var(--gold)">${G.loop}</b><br>Здоровье: ${G.php} / ${G.pmax} (+${heal})</div>
+     <div class="mfoot"><button class="btn gold" id="bNext">Круг ${G.loop+1}</button></div>`);
+    $('#bNext').onclick=()=>{G.loop++;startSearch()};
+  },900);
+  return true;
+}
+$('#bEnd').onclick=()=>{if(!B.busy)endTurn()};
+async function endTurn(){
+  if(B.busy)return;B.busy=true;
+  B.disc.push(...B.hand);B.hand=[];render();
+  await wait(450);
+  B.dblock=0;
+  if(B.burn.t>0){hitDemon(B.burn.d,true);B.burn.t--;if(!B.burn.t)B.burn.d=0;log('Пламя жжёт демона.');render();if(checkWin())return;await wait(550)}
+  const it=B.intent;
+  switch(it.k){
+    case 'atk':hitPlayer(it.v);if(!B.reflect)log(`Демон бьёт: ${it.v}.`);break;
+    case 'heavy':hitPlayer(it.v);if(!B.reflect)log(`Сокрушительный удар: ${it.v}!`);break;
+    case 'double':timeFx();hitPlayer(it.v);render();await wait(350);if(B.dhp>0){hitPlayer(it.v)}if(!B.reflect)log('Демон ускорил время и ударил дважды!');break;
+    case 'block':B.dblock+=it.v;log('Демон окутывается тенью.');break;
+    case 'rewind':{timeFx();const past=B.hist[B.hist.length-2]??B.dhp;const h=Math.max(0,Math.min(16,past-B.dhp));
+      B.dhp+=h;log(h?`Перемотка! Демон вернул себе ${h} здоровья.`:'Перемотка — но терять было нечего.');if(h)floatAt($('#demonSvg'),'+'+h,'#b893ff');break}
+    case 'stop':timeFx();B.penalty=1;log('Стрелки замирают. Следующий ход будет короче на мгновение.');break;
+    case 'rush':timeFx();B.rush=true;log('«Поторопись», — шепчет демон.');break;
+    case 'age':timeFx();B.aging=true;log('Ваши карты начинают стареть…');break;
+    case 'stun':log('Демон оцепенел — у него украли час.');break;
+    case 'cancel':log('Якорь удержал время.');break;
+  }
+  render();
+  if(checkWin())return;
+  B.hist.push(B.dhp);
+  if(G.php<=0){await wait(700);gameOver();return}
+  await wait(800);
+  startPlayerTurn();
+}
+function gameOver(){
+  B.busy=true;
+  const done=G.loop-1;
+  $('#overText').innerHTML=`Демон вечности забирает вашу душу в свою коллекцию.<br>Пройдено кругов: <b style="color:var(--gold)">${done}</b>${G.best?`<br>Рекорд: ${G.best}`:''}`;
+  show('over');
+}
+
+// prevent context menu long-press on mobile
+document.addEventListener('contextmenu',e=>e.preventDefault());
+document.addEventListener('dblclick',e=>e.preventDefault());
+
+window.__inf={G,get S(){return S},get B(){return B},startSearch,toPrep,startDuel,finishObj};
+})();
+</script>
+</body>
+</html>
